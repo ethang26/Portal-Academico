@@ -1,0 +1,37 @@
+@model IEnumerable<PortalAcademico.Models.Curso>
+@{
+    ViewData["Title"] = "Lista de Cursos";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Créditos</th>
+            <th>Activo</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var curso in Model)
+    {
+        <tr>
+            <td>@curso.Codigo</td>
+            <td>@curso.Nombre</td>
+            <td>@curso.Creditos</td>
+            <td>@curso.Activo</td>
+            <td>
+                <a href="@Url.Action("EditarCurso", new { id = curso.Id })" class="btn btn-primary">Editar</a>
+                <form method="post" action="@Url.Action("DesactivarCurso", new { id = curso.Id })" style="display:inline;">
+                    <button type="submit" class="btn btn-danger">Desactivar</button>
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<a href="@Url.Action("CrearCurso")" class="btn btn-success">Crear nuevo curso</a>

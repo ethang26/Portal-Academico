@@ -66,6 +66,11 @@ app.UseSession();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapControllerRoute(
+    name: "coordinador",
+    pattern: "coordinador/{action=Cursos}/{id?}",
+    defaults: new { controller = "Coordinador" });
 app.MapRazorPages();
 
 // Seeding (roles, usuario coordinador, cursos)

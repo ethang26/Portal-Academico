@@ -1,0 +1,34 @@
+@model PortalAcademico.Models.Curso
+@{
+    ViewData["Title"] = "Crear Curso";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form method="post">
+    <div class="form-group">
+        <label>Código</label>
+        <input asp-for="Codigo" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Nombre</label>
+        <input asp-for="Nombre" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Créditos</label>
+        <input asp-for="Creditos" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Cupo máximo</label>
+        <input asp-for="CupoMaximo" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Horario inicio</label>
+        <input asp-for="HorarioInicio" type="time" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Horario fin</label>
+        <input asp-for="HorarioFin" type="time" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Crear</button>
+</form>
