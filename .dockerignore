@@ -1,0 +1,15 @@
+# Ignorar carpetas generadas por .NET
+bin/
+obj/
+
+# Ignorar archivos secretos
+appsettings.Development.json
+appsettings.json
+
+# Ignorar carpetas del sistema de control de versiones
+.git/
+.gitignore
+
+# Ignorar los archivos de compilación de Docker
+Dockerfile
+.dockerignore
