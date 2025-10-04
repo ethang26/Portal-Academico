@@ -26,10 +26,28 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
+                        @using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+@{
+    var nombreUltimoCurso = HttpContextAccessor.HttpContext?.Session.GetString("UltimoCursoNombre");
+    var idUltimoCurso = HttpContextAccessor.HttpContext?.Session.GetString("UltimoCursoId");
+}
+
+@if (!string.IsNullOrEmpty(nombreUltimoCurso))
+{
+    <li class="nav-item">
+        <a class="nav-link text-info" asp-controller="Cursos" asp-action="Detalle" asp-route-id="@idUltimoCurso">
+            Volver al curso @nombreUltimoCurso
+        </a>
+    </li>
+}
+
                     </ul>
                     <partial name="_LoginPartial" />
                 </div>
             </div>
+            
         </nav>
     </header>
     <div class="container">

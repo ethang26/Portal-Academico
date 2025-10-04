@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PortalAcademico.Data;
 using PortalAcademico.Models;
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
+using Microsoft.AspNetCore.Http; // <-- para Session SetString/GetString
 
 namespace PortalAcademico.Controllers;
 
@@ -9,60 +12,84 @@ namespace PortalAcademico.Controllers;
 public class CursosController : Controller
 {
     private readonly ApplicationDbContext _ctx;
-    public CursosController(ApplicationDbContext ctx) => _ctx = ctx;
+    private readonly IDistributedCache _cache;
+
+    public CursosController(ApplicationDbContext ctx, IDistributedCache cache)
+    {
+        _ctx = ctx;
+        _cache = cache;
+    }
 
     // GET /cursos
     [HttpGet("")]
-     public async Task<IActionResult> Index([FromQuery] FiltrosCursoViewModel filtros)
+    public async Task<IActionResult> Index([FromQuery] FiltrosCursoViewModel filtros)
     {
-        var query = _ctx.Cursos.AsQueryable().Where(c => c.Activo);
+        const string cacheKey = "cursos_activos";
+        string? cachedJson = await _cache.GetStringAsync(cacheKey);
+        List<Curso> cursos;
 
-        // Validaciones
-        if (filtros.CreditosMin < 0 || filtros.CreditosMax < 0)
-            ModelState.AddModelError("", "Los créditos no pueden ser negativos.");
-
-        if (filtros.HorarioInicio.HasValue && filtros.HorarioFin.HasValue &&
-            filtros.HorarioInicio >= filtros.HorarioFin)
-            ModelState.AddModelError("", "El horario inicial debe ser anterior al horario final.");
-
-        if (!ModelState.IsValid)
+        if (!string.IsNullOrEmpty(cachedJson))
         {
-            filtros.Cursos = await query.ToListAsync();
-            return View(filtros);
+            cursos = JsonSerializer.Deserialize<List<Curso>>(cachedJson) ?? new List<Curso>();
+        }
+        else
+        {
+            cursos = await _ctx.Cursos
+                .Where(c => c.Activo)
+                .OrderBy(c => c.Codigo)
+                .AsNoTracking()
+                .ToListAsync();
+
+            var options = new DistributedCacheEntryOptions()
+                .SetSlidingExpiration(TimeSpan.FromSeconds(60));
+            await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(cursos), options);
         }
 
-        // Filtros dinámicos
-        if (!string.IsNullOrWhiteSpace(filtros.Nombre))
-            query = query.Where(c => c.Nombre.Contains(filtros.Nombre));
-
-        if (filtros.CreditosMin.HasValue)
-            query = query.Where(c => c.Creditos >= filtros.CreditosMin);
-
-        if (filtros.CreditosMax.HasValue)
-            query = query.Where(c => c.Creditos <= filtros.CreditosMax);
-
-        if (filtros.HorarioInicio.HasValue)
-            query = query.Where(c => c.HorarioInicio >= filtros.HorarioInicio);
-
-        if (filtros.HorarioFin.HasValue)
-            query = query.Where(c => c.HorarioFin <= filtros.HorarioFin);
-
-        filtros.Cursos = await query.OrderBy(c => c.Codigo).ToListAsync();
-
+        filtros.Cursos = cursos;
         return View(filtros);
+    }
+
+    [HttpPost("crear")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Crear(Curso curso)
+    {
+        if (!ModelState.IsValid) return View(curso);
+
+        _ctx.Cursos.Add(curso);
+        await _ctx.SaveChangesAsync();
+
+        await _cache.RemoveAsync("cursos_activos"); // invalidar cache
+        return RedirectToAction("Index");
+    }
+
+    [HttpPost("editar/{id:int}")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Editar(int id, Curso curso)
+    {
+        if (id != curso.Id) return BadRequest();
+
+        _ctx.Update(curso);
+        await _ctx.SaveChangesAsync();
+
+        await _cache.RemoveAsync("cursos_activos"); // invalidar cache
+        return RedirectToAction("Index");
     }
 
     // GET /cursos/{id}
     [HttpGet("{id:int}")]
-     public async Task<IActionResult> Detalle(int id)
+    public async Task<IActionResult> Detalle(int id)
     {
-       var curso = await _ctx.Cursos
-        .Include(c => c.Matriculas)
-        .FirstOrDefaultAsync(c => c.Id == id && c.Activo);
+        var curso = await _ctx.Cursos
+            .Include(c => c.Matriculas)
+            .FirstOrDefaultAsync(c => c.Id == id && c.Activo);
 
-    if (curso == null) return NotFound();
+        if (curso == null) return NotFound();
 
-    ViewBag.CuposOcupados = curso.Matriculas.Count(m => m.Estado != EstadoMatricula.Cancelada);
-    return View(curso);
+        // Guardar el último curso visitado en sesión (requisito P4)
+        HttpContext.Session.SetString("UltimoCursoId", curso.Id.ToString());
+        HttpContext.Session.SetString("UltimoCursoNombre", curso.Nombre);
+
+        ViewBag.CuposOcupados = curso.Matriculas.Count(m => m.Estado != EstadoMatricula.Cancelada);
+        return View(curso);
     }
 }
