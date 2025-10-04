@@ -26,6 +26,16 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link" href="/coordinador/cursos">Lista de Cursos</a>
+                        </li>
+
+                        <!-- Página para crear un nuevo curso -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="/coordinador/cursos/crear">Crear Curso</a>
+                        </li>
+
                         @using Microsoft.AspNetCore.Http
 @inject IHttpContextAccessor HttpContextAccessor
 
