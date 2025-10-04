@@ -1,12 +1,77 @@
-@model IEnumerable<PortalAcademico.Models.Curso>
-<h2>Cursos</h2>
-<ul>
-@foreach (var c in Model)
-{
-    <li>
-        <a asp-controller="Cursos" asp-action="Detalle" asp-route-id="@c.Id">
-            @c.Codigo - @c.Nombre (@c.Creditos) — @c.HorarioInicio - @c.HorarioFin
-        </a>
-    </li>
+@model PortalAcademico.Models.FiltrosCursoViewModel
+@{
+    ViewData["Title"] = "Catálogo de cursos";
 }
-</ul>
+
+<h2>@ViewData["Title"]</h2>
+
+<form method="get" class="mb-4">
+    <div class="row mb-2">
+        <div class="col-md-3">
+            <label>Nombre</label>
+            <input type="text" name="Nombre" class="form-control" value="@Model?.Nombre" />
+        </div>
+        <div class="col-md-2">
+            <label>Créditos mín</label>
+            <input type="number" name="CreditosMin" class="form-control" value="@Model?.CreditosMin" />
+        </div>
+        <div class="col-md-2">
+            <label>Créditos máx</label>
+            <input type="number" name="CreditosMax" class="form-control" value="@Model?.CreditosMax" />
+        </div>
+        <div class="col-md-2">
+            <label>Horario inicio</label>
+            <input type="time" name="HorarioInicio" class="form-control" value="@(Model?.HorarioInicio?.ToString(@"hh\:mm"))" />
+        </div>
+        <div class="col-md-2">
+            <label>Horario fin</label>
+            <input type="time" name="HorarioFin" class="form-control" value="@(Model?.HorarioFin?.ToString(@"hh\:mm"))" />
+        </div>
+        <div class="col-md-1 align-self-end">
+            <button class="btn btn-primary w-100" type="submit">Filtrar</button>
+        </div>
+    </div>
+</form>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <div>@err.ErrorMessage</div>
+        }
+    </div>
+}
+
+@if (Model?.Cursos == null || !Model.Cursos.Any())
+{
+    <p>No hay cursos que coincidan con los filtros.</p>
+}
+else
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Créditos</th>
+                <th>Horario</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var c in Model.Cursos)
+        {
+            <tr>
+                <td>@c.Codigo</td>
+                <td>@c.Nombre</td>
+                <td>@c.Creditos</td>
+                <td>@c.HorarioInicio - @c.HorarioFin</td>
+                <td>
+                    <a asp-controller="Cursos" asp-action="Detalle" asp-route-id="@c.Id" class="btn btn-sm btn-info">Ver detalle</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PortalAcademico.Data;
+using PortalAcademico.Models;
 
 namespace PortalAcademico.Controllers;
 
@@ -12,21 +13,51 @@ public class CursosController : Controller
 
     // GET /cursos
     [HttpGet("")]
-    public async Task<IActionResult> Index()
+     public async Task<IActionResult> Index([FromQuery] FiltrosCursoViewModel filtros)
     {
-        var cursos = await _ctx.Cursos
-            .Where(c => c.Activo)
-            .OrderBy(c => c.Codigo)
-            .ToListAsync();
-        return View(cursos);
+        var query = _ctx.Cursos.AsQueryable().Where(c => c.Activo);
+
+        // Validaciones
+        if (filtros.CreditosMin < 0 || filtros.CreditosMax < 0)
+            ModelState.AddModelError("", "Los créditos no pueden ser negativos.");
+
+        if (filtros.HorarioInicio.HasValue && filtros.HorarioFin.HasValue &&
+            filtros.HorarioInicio >= filtros.HorarioFin)
+            ModelState.AddModelError("", "El horario inicial debe ser anterior al horario final.");
+
+        if (!ModelState.IsValid)
+        {
+            filtros.Cursos = await query.ToListAsync();
+            return View(filtros);
+        }
+
+        // Filtros dinámicos
+        if (!string.IsNullOrWhiteSpace(filtros.Nombre))
+            query = query.Where(c => c.Nombre.Contains(filtros.Nombre));
+
+        if (filtros.CreditosMin.HasValue)
+            query = query.Where(c => c.Creditos >= filtros.CreditosMin);
+
+        if (filtros.CreditosMax.HasValue)
+            query = query.Where(c => c.Creditos <= filtros.CreditosMax);
+
+        if (filtros.HorarioInicio.HasValue)
+            query = query.Where(c => c.HorarioInicio >= filtros.HorarioInicio);
+
+        if (filtros.HorarioFin.HasValue)
+            query = query.Where(c => c.HorarioFin <= filtros.HorarioFin);
+
+        filtros.Cursos = await query.OrderBy(c => c.Codigo).ToListAsync();
+
+        return View(filtros);
     }
 
     // GET /cursos/{id}
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> Detalle(int id)
+     public async Task<IActionResult> Detalle(int id)
     {
         var curso = await _ctx.Cursos.FindAsync(id);
-        if (curso == null) return NotFound();
+        if (curso == null || !curso.Activo) return NotFound();
         return View(curso);
     }
 }
