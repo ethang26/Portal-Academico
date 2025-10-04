@@ -4,6 +4,7 @@
 <p><strong>Créditos:</strong> @Model.Creditos</p>
 <p><strong>Horario:</strong> @Model.HorarioInicio - @Model.HorarioFin</p>
 <p><strong>Cupo máximo:</strong> @Model.CupoMaximo</p>
+<p><strong>Cupos ocupados:</strong> @((int)ViewBag.CuposOcupados) / @Model.CupoMaximo</p>
 
 @if (User.Identity?.IsAuthenticated ?? false)
 {

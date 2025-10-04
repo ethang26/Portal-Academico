@@ -56,8 +56,13 @@ public class CursosController : Controller
     [HttpGet("{id:int}")]
      public async Task<IActionResult> Detalle(int id)
     {
-        var curso = await _ctx.Cursos.FindAsync(id);
-        if (curso == null || !curso.Activo) return NotFound();
-        return View(curso);
+       var curso = await _ctx.Cursos
+        .Include(c => c.Matriculas)
+        .FirstOrDefaultAsync(c => c.Id == id && c.Activo);
+
+    if (curso == null) return NotFound();
+
+    ViewBag.CuposOcupados = curso.Matriculas.Count(m => m.Estado != EstadoMatricula.Cancelada);
+    return View(curso);
     }
 }
