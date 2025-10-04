@@ -1,0 +1,19 @@
+@model PortalAcademico.Models.Curso
+<h2>@Model.Codigo - @Model.Nombre</h2>
+<p>Créditos: @Model.Creditos</p>
+<p>Cupo Máximo: @Model.CupoMaximo</p>
+<p>Horario: @Model.HorarioInicio - @Model.HorarioFin</p>
+
+@if (User.Identity?.IsAuthenticated ?? false)
+{
+    <form asp-controller="Matriculas" asp-action="Inscribirse" asp-route-cursoId="@Model.Id" method="post">
+        <button type="submit" class="btn btn-primary">Inscribirse</button>
+    </form>
+}
+else
+{
+    <a asp-area="Identity" asp-page="/Account/Login">Inicia sesión para inscribirte</a>
+}
+
+@if (TempData["Ok"] != null) { <div class="alert alert-success">@TempData["Ok"]</div> }
+@if (TempData["Error"] != null) { <div class="alert alert-danger">@TempData["Error"]</div> }

@@ -1,0 +1,12 @@
+@model IEnumerable<PortalAcademico.Models.Curso>
+<h2>Cursos</h2>
+<ul>
+@foreach (var c in Model)
+{
+    <li>
+        <a asp-controller="Cursos" asp-action="Detalle" asp-route-id="@c.Id">
+            @c.Codigo - @c.Nombre (@c.Creditos) — @c.HorarioInicio - @c.HorarioFin
+        </a>
+    </li>
+}
+</ul>
